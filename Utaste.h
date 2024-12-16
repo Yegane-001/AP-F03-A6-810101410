@@ -11,7 +11,7 @@ public:
    void handle_get();
    void handle_put();
    void handle_delete();
-   void handle_post();
+   void handle_post(const string command);
 
 };
 
