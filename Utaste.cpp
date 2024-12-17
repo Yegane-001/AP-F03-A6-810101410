@@ -85,6 +85,11 @@ void Utaste::handle_post(const string method) {
             }
         }
 
+        if (users.empty()) {  // بررسی اینکه هیچ کاربری ثبت‌نام نکرده است
+            cout << NOT_FOUND << endl;
+            return;
+        }
+
         User* user = find_user(username);
         if (user == nullptr) {
             cout << NOT_FOUND << endl;
