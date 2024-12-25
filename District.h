@@ -4,19 +4,19 @@
 #include <iostream>
 #include <vector>
 #include <string>
-
+using namespace std;
 class District {
 public:
-    std::string name;
-    std::vector<std::string> neighbors;
+    string name;
+    vector<string> neighbors;
 
-    District(); // سازنده پیش‌فرض
-    District(const std::string& districtName); // سازنده با نام
+    District();
+    District(const string& districtName); 
 
-    virtual void print() const; // متد مجازی برای نمایش اطلاعات
+    virtual void print() const;
 
-    virtual ~District() = default; // مخرب پیش‌فرض
+    virtual ~District() = default;
     
 };
 
-#endif // DISTRICT_H
+#endif
