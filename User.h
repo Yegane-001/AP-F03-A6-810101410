@@ -7,6 +7,7 @@ class User {
 private:
     string username;
     string password;
+    string location;
     int state;
 public:
     User(const string& u,const string& p);
@@ -14,6 +15,8 @@ public:
     string get_password();
     int get_state();
     void set_state(int new_state);
+    string get_location(); 
+    void set_location(const string& loc);
 
 };
 

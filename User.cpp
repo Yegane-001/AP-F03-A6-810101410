@@ -20,3 +20,11 @@ int User::get_state() {
 void User::set_state(int new_state) {
     state = new_state;
 }
+
+string User::get_location() { 
+    return location;
+} 
+
+void User::set_location(const string& loc) { 
+    location = loc;
+}
