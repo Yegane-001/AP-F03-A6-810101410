@@ -49,7 +49,9 @@ vector<string> Utaste::getNearbyDistricts(const string& districtName) {
     return result;
 }
 
-
+void Utaste::addReservation(const Reserve& reservation) { 
+    reservations.push_back(reservation); 
+}
 
 void Utaste::handle_input() {
     string method;
@@ -67,6 +69,7 @@ void Utaste::handle_input() {
         }
     }
 }
+
 
 User* Utaste::find_user(const string& username) {
     for (auto& user : users) {
