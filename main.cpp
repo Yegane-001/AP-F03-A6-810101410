@@ -19,8 +19,6 @@ int main(int argc, char* argv[]) {
     vector<District> districts = readDistricts(districtsFile);
     vector<Restaurant> restaurants = readRestaurants(restaurantsFile);
     Utaste utaste(districts,restaurants);
-    //cout << "\nRestaurants Data:\n";
-    //for (const auto& r : restaurants) r.print();
     utaste.handle_input();
 
     return 0;
