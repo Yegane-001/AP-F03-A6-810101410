@@ -7,7 +7,7 @@
 using namespace std;
 class District {
 public:
-    string name;
+    string district_name;
     vector<string> neighbors;
 
     District();
