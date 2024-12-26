@@ -26,7 +26,6 @@ vector<District> readDistricts(const string& filePath) {
     return districts;
 }
 
-// تابع برای خواندن فایل رستوران‌ها
 vector<Restaurant> readRestaurants(const string& filePath) {
     vector<Restaurant> restaurants;
     ifstream file(filePath);
