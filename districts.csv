@@ -2,6 +2,8 @@ district,neighbors
 Azadi,Behboodi;SatarKhan;Shadman
 Saadat Abad,Punak;Shahrak Gharb;Tajrish
 Enghelab,Jomhouri;Karegar
-Vanak,Mirdamad;Tajrish;Jordan
-Shariati,Gholhak;Darrous;Sohrevardi
+Vanak,Mirdamad;Tajrish;Gholhak
+Shariati,Gholhak;Tajrish;Sohrevardi
 Jordan,Valiasr;Nelson Mandela;Vanak
+Gholhak,Gotham;Vanak
+Mirdamad,Vanak
