@@ -61,7 +61,6 @@ vector<Restaurant> readRestaurants(const string& filePath) {
         ss >> r.closingTime;
         ss.ignore();
         ss >> r.numTables;
-
         restaurants.push_back(r);
     }
     return restaurants;
