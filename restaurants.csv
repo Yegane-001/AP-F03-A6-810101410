@@ -2,4 +2,5 @@ name,district,foods:prices,opening_time,closing_time,number_of_tables
 sib,Shariati,pitza:220;berger:190;hotdog:185,9,23,45
 maman joon,Gotham,pitza:290;berger:180;sandwich:95;food with space in name:20,11,1,20
 ghazal,Vanak,kebab:250;rice:120;salad:70,8,22,30
-classic cafe,Tajrish,coffee:50;cake:90;juice:60,10,21,15
+zassic cafe,Tajrish,coffee:50;cake:90;juice:60,10,21,15
+eshgh,Gholhak,pitza:290;berger:180;sandwich:95;food with space in name:20,,,
