@@ -5,21 +5,25 @@ using namespace std;
 #include <vector>
 #include "User.h"
 #include "District.h"
+#include "Restaurant.h"
 
 class Utaste {
 private:
     vector<User> users;
     User* current_user = nullptr;
     vector<District> districts;
+    vector<Restaurant> restaurants;
 
 public:
-    Utaste(const vector<District>& districts);
+    Utaste(const vector<District>& districts, const vector<Restaurant>& restaurants);
     void handle_input();
     void handle_get(const string command);
     void handle_put(const string command);
     void handle_delete();
     void handle_post(const string command);
     User* find_user(const string& username);
+    vector<string> getNearbyDistricts(const string& districtName);
+    //void printRestaurantDetails();
 };
 
 #endif
