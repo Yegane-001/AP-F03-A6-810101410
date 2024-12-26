@@ -3,12 +3,14 @@
 using namespace std;
 
 // سازنده کلاس
+#include "Reserve.h"
+#include <iostream>
+
 Reserve::Reserve(Restaurant& r, User& u, int id, int tbl, int start_time, int end_time)
     : restaurant(r), user(u), reserve_id(id), table(tbl) {
-    for (int hour = start_time; hour <= end_time; ++hour) {
-        reserved_time[hour] = 0; // مقدار پیش‌فرض
-    }
+    reserved_time[start_time] = end_time;
 }
+
 
 // متد دریافت شناسه رزرو
 int Reserve::get_reserveId() const {
