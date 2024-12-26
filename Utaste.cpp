@@ -82,17 +82,17 @@ User* Utaste::find_user(const string& username) {
 
 void Utaste::handle_post(const string method) {
     try {
-        string command, secondOrder;
+        string command, action;
         istringstream iss(method);
-        iss >> command >> secondOrder;
+        iss >> command >> action;
 
-        if (secondOrder != SIGNUP && secondOrder != LOGIN && secondOrder != LOGOUT) {
-            throw NOT_FOUND;
+        if (action != SIGNUP && action != LOGIN && action != LOGOUT && action != "reserve") {
+            throw BAD_REQUEST;
         }
 
         string username, password;
         string word;
-        if (secondOrder == SIGNUP || secondOrder == LOGIN) {
+        if (action == SIGNUP || action == LOGIN) {
             bool hasUsername = false, hasPassword = false;
             while (iss >> word) {
                 if (word == USERNAME) {
@@ -122,7 +122,7 @@ void Utaste::handle_post(const string method) {
             }
         }
 
-        if (secondOrder == SIGNUP) {
+        if (action == SIGNUP) {
             if (find_user(username) != nullptr) {
                 cout << BAD_REQUEST << endl;
             } else {
@@ -131,7 +131,7 @@ void Utaste::handle_post(const string method) {
                 cout << OK << endl;
             }
 
-        } else if (secondOrder == LOGIN) {
+        } else if (action == LOGIN) {
             if (users.empty()) { 
                 cout << NOT_FOUND << endl;
                 return;
@@ -150,7 +150,7 @@ void Utaste::handle_post(const string method) {
                 cout << OK << endl;
             }
 
-        } else if (secondOrder == LOGOUT) {
+        } else if (action == LOGOUT) {
             if (current_user == nullptr) {
                 cout << PERMISSION_DENIED << endl;
             } else {
@@ -158,11 +158,156 @@ void Utaste::handle_post(const string method) {
                 current_user = nullptr;
                 cout << OK << endl;
             }
+        } 
+        
+        else if (action == "reserve") {
+    // پارس کردن آرگومان‌ها
+            string restaurantName, tableId, startTime, endTime, foods;
+
+            bool hasRestaurantName = false;
+            bool hasTableId = false;
+            bool hasStartTime = false;
+            bool hasEndTime = false;
+            bool hasFoods = false;
+
+            while (iss >> word) {
+                if (word == "restaurant_name") {
+                    hasRestaurantName = true;
+                    iss >> ws; // Ignore leading whitespace
+                    getline(iss, restaurantName, '"');
+                    getline(iss, restaurantName, '"');
+                } else if (word == "table_id") {
+                    hasTableId = true;
+                    iss >> ws; // Ignore leading whitespace
+                    getline(iss, tableId, '"');
+                    getline(iss, tableId, '"');
+                } else if (word == "start_time") {
+                    hasStartTime = true;
+                    iss >> ws; // Ignore leading whitespace
+                    getline(iss, startTime, '"');
+                    getline(iss, startTime, '"');
+                } else if (word == "end_time") {
+                    hasEndTime = true;
+                    iss >> ws; // Ignore leading whitespace
+                    getline(iss, endTime, '"');
+                    getline(iss, endTime, '"');
+                } else if (word == "foods") {
+                    bool hasFoods = true;
+                    iss >> ws; // Ignore leading whitespace
+                    getline(iss, foods, '"');
+                    getline(iss, foods, '"');
+                }
+            }
+
+            if (!hasRestaurantName || !hasTableId || !hasStartTime || !hasEndTime) {
+                throw string(BAD_REQUEST);
+            }
+
+            int start_time, end_time, table_id;
+            start_time = stoi(startTime);
+            end_time = stoi(endTime);
+            table_id = stoi(tableId);
+            auto restaurant_it = find_if(restaurants.begin(), restaurants.end(), [&](const Restaurant& r) {
+                return r.restaurantName == restaurantName;
+            });
+
+            if (restaurant_it == restaurants.end()) throw string("Not Found");
+            Restaurant& restaurant = *restaurant_it;
+            // بررسی محدوده ساعت کاری رستوران
+            if (start_time < 1 || end_time > 24 || start_time < restaurant.openingTime || end_time > restaurant.closingTime) {
+                throw string("Permission Denied");
+            }
+            // بررسی موجود بودن میز
+            if (table_id < 1 || table_id > restaurant.numTables) {
+                throw string("Not Found");
+            }
+            //بررسی موجود یودن غذاها
+            vector<string> foodList;
+            if (!foods.empty()) {
+                istringstream foodStream(foods);
+                string foodItem;
+                while (getline(foodStream, foodItem, ',')) {
+                    foodList.push_back(foodItem);
+                }
+
+                for (const auto& food : foodList) {
+                    auto food_it = find_if(restaurant.foods.begin(), restaurant.foods.end(), [&](const pair<string, int>& f) {
+                        return f.first == food;
+                    });
+                    if (food_it == restaurant.foods.end()) {
+                        throw string("Not Found");
+                    }
+                }
+            }
+
+             // بررسی تداخل رزروها
+            for (const auto& res : reservations) {
+                // بررسی تداخل در همان رستوران
+                if (res.restaurant.restaurantName == restaurantName && res.get_table() == table_id) {
+                    for (const auto& time : res.get_reservedTime()) {
+                        if ((start_time >= time.first && start_time < time.second) ||
+                            (end_time > time.first && end_time <= time.second)) {
+                            throw string("Permission Denied");
+                        }
+                    }
+                }
+
+                // بررسی تداخل در رستوران‌های دیگر
+                if (res.user.get_username() == current_user->get_username()) {
+                    for (const auto& time : res.get_reservedTime()) {
+                        if ((start_time >= time.first && start_time < time.second) ||
+                            (end_time > time.first && end_time <= time.second)) {
+                            throw string("Permission Denied");
+                        }
+                    }
+                }
+            }
+            // ایجاد رزرو
+            int reserve_id = 1;  // شناسه رزرو در سطح رستوران
+            for (const auto& res : reservations) {
+                if (res.restaurant.restaurantName == restaurantName) {
+                    reserve_id++;
+                }
+            }
+            
+            Reserve new_reserve(restaurant, *current_user, reserve_id, table_id, start_time, end_time);
+            // اضافه کردن غذاها به رزرو و محاسبه قیمت
+            int total_price = 0;
+            map<int, int> reserved_time;
+            for (int hour = start_time; hour <= end_time; ++hour) {
+                reserved_time[hour] = table_id;
+            }
+            new_reserve.get_reservedTime() = reserved_time;
+
+            for (const auto& food : foodList) {
+                auto food_it = find_if(restaurant.foods.begin(), restaurant.foods.end(), [&](const pair<string, int>& f) {
+                    return f.first == food;
+                });
+                if (food_it != restaurant.foods.end()) {
+                    total_price += food_it->second;
+                }
+            }
+
+            addReservation(new_reserve);
+
+            // چاپ اطلاعات رزرو
+            cout << "Reserve ID: " << reserve_id << endl;
+            cout << "Table " << table_id << " for " << start_time << " to " << end_time << " in " << restaurantName << endl;
+            cout << "Price: " << total_price << endl;
+        
+
+
+    // بقیه کد همان است
         }
-    } catch (const string& err) {
+
+    } 
+    
+    catch (const string& err) {
         cout << err << endl;
     }
 }
+
+
 
 
 void Utaste::handle_get(const string method) {
