@@ -6,6 +6,7 @@ using namespace std;
 #include "User.h"
 #include "District.h"
 #include "Restaurant.h"
+#include "Reserve.h"
 
 class Utaste {
 private:
@@ -13,6 +14,7 @@ private:
     User* current_user = nullptr;
     vector<District> districts;
     vector<Restaurant> restaurants;
+    vector<Reserve> reservations;
 
 public:
     Utaste(const vector<District>& districts, const vector<Restaurant>& restaurants);
@@ -23,7 +25,7 @@ public:
     void handle_post(const string command);
     User* find_user(const string& username);
     vector<string> getNearbyDistricts(const string& districtName);
-    //void printRestaurantDetails();
+    void addReservation(const Reserve& reservation);
 };
 
 #endif
