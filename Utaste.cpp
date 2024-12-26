@@ -1,10 +1,12 @@
 #include "Utaste.h"
 #include "User.h"
+#include "Restaurant.h"
+#include "District.h"
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <set>
 using namespace std;
-
 const string GET = "GET";
 const string PUT = "PUT";
 const string DELETE = "DELETE";
@@ -18,16 +20,36 @@ const string LOGOUT = "logout";
 const string OK = "OK";
 const string PERMISSION_DENIED = "Permission Denied";
 const string NOT_FOUND = "Not Found";
+const string EMPTY = "Empty";
 const string DISTRICTS = "districts"; 
 const string DISTRICT = "district";
-const string EMPTY = "empty";
+const string SET_LOCATION = "setlocation"; 
+const string RESTAURANTS = "restaurants";
+const string RESTAURANT_DETAIL = "restaurant_detail";
+const string RESERVES = "reserves";
+const string FOOD_NAME = "food_name";
+const string MY_DISTRICT = "my_district";
 const int LOGIN_STATE = 2;
 const int LOGOUT_STATE = 3;
 const int TWO_CHARACTER = 2;
 const int ZERO = 0;
 const int ONE = 1;
+const char Double_quotation = '"';
 
-Utaste::Utaste(const vector<District>& districts) : districts(districts) {}
+Utaste::Utaste(const vector<District>& districts, const vector<Restaurant>& restaurants) : districts(districts), restaurants(restaurants) {}
+
+vector<string> Utaste::getNearbyDistricts(const string& districtName) {
+    vector<string> result;
+    auto it = find_if(districts.begin(), districts.end(), [&](const District& d) {
+        return d.district_name == districtName;
+    });
+    if (it != districts.end()) {
+        result = it->neighbors;
+    }
+    return result;
+}
+
+
 
 void Utaste::handle_input() {
     string method;
@@ -72,7 +94,7 @@ void Utaste::handle_post(const string method) {
             while (iss >> word) {
                 if (word == USERNAME) {
                     iss >> word;
-                    if (word.size() < TWO_CHARACTER || word.front() != '"' || word.back() != '"') {
+                    if (word.size() < TWO_CHARACTER || word.front() != Double_quotation || word.back() != Double_quotation) {
                         throw BAD_REQUEST;
                     }
                     username = word.substr(ONE, word.size() - TWO_CHARACTER);
@@ -82,7 +104,7 @@ void Utaste::handle_post(const string method) {
                     hasUsername = true;
                 } else if (word == PASSWORD) {
                     iss >> word;
-                    if (word.size() < TWO_CHARACTER || word.front() != '"' || word.back() != '"') {
+                    if (word.size() < TWO_CHARACTER || word.front() != Double_quotation || word.back() != Double_quotation) {
                         throw BAD_REQUEST;
                     }
                     password = word.substr(ONE, word.size() - TWO_CHARACTER);
@@ -146,59 +168,177 @@ void Utaste::handle_get(const string method) {
         istringstream iss(method);
         iss >> command >> secondOrder;
 
-        if (secondOrder != DISTRICTS) {
-            throw BAD_REQUEST;
-        }
-
         if (current_user == nullptr || current_user->get_state() != LOGIN_STATE) {
             cout << PERMISSION_DENIED << endl;
             return;
         }
 
-        if (districts.empty()) {
-            cout << EMPTY << endl;
-            return;
+        if (secondOrder != DISTRICTS && secondOrder != RESTAURANTS && secondOrder != RESTAURANT_DETAIL && secondOrder != RESERVES) {
+            throw string(BAD_REQUEST);
         }
 
-        string word;
-        bool districtFilter = false;
-        string districtName;
-        while (iss >> word) {
-            if (word == DISTRICT) {
-                iss >> word;
-                if (word.size() < TWO_CHARACTER || word.front() != '"' || word.back() != '"') {
+        if (secondOrder == DISTRICTS) {
+            if (districts.empty()) {
+                cout << EMPTY << endl;
+                return;
+            }
+
+            string word;
+            bool districtFilter = false;
+            string districtName;
+            while (iss >> word) {
+                if (word == DISTRICT) {
+                    iss >> word;
+                    if (word.size() < TWO_CHARACTER || word.front() != Double_quotation || word.back() != Double_quotation) {
+                        break;
+                    }
+                    districtName = word.substr(ONE, word.size() - TWO_CHARACTER);
+                    if (districtName.empty()) {
+                        break; 
+                    }
+                    districtFilter = true;
                     break;
                 }
-                districtName = word.substr(ONE, word.size() - TWO_CHARACTER);
-                if (districtName.empty()) {
-                    break; 
-                }
-                districtFilter = true;
-                break;
             }
+
+            if (districtFilter) {
+                auto it = find_if(districts.begin(), districts.end(), [&](const District& d) {
+                    return d.district_name == districtName;
+                });
+                if (it != districts.end()) {
+                    it->print();
+                } else {
+                    cout << NOT_FOUND << endl;
+                }
+            } else {
+                sort(districts.begin(), districts.end(), [](const District& a, const District& b) {
+                    return a.district_name < b.district_name;
+                });
+                for (const auto& district : districts) {
+                    district.print();
+                }
+            }
+        } 
+
+       else if (secondOrder == RESTAURANTS) {
+            if (current_user->get_location().empty()) {
+                cout << NOT_FOUND << endl;
+                return;
+            }
+
+            string userDistrict = current_user->get_location();
+            string foodName;
+            bool foodFilter = false;
+
+            string word;
+            while (iss >> word) {
+                if (word == FOOD_NAME) {
+                    iss >> ws;
+                    getline(iss, word);
+                    size_t start = word.find(Double_quotation);
+                    size_t end = word.rfind(Double_quotation);
+                    if (start == string::npos || end == string::npos || start == end) {
+                        throw string(BAD_REQUEST);
+                    }
+                    foodName = word.substr(start + ONE, end - start - ONE);
+                    if (foodName.empty()) {
+                        throw string(BAD_REQUEST);
+                    }
+                    foodFilter = true;
+                    break;
+                }
+            }
+
+            set<string> printedRestaurants;
+
+            auto filterAndPrintRestaurants = [&](const vector<Restaurant>& restaurants) {
+                vector<Restaurant> filteredRestaurants;
+                for (const auto& restaurant : restaurants) {
+                    if (foodFilter) {
+                        bool found = false;
+                        for (const auto& food : restaurant.foods) {
+                            if (food.first == foodName) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) continue;
+                    }
+                    if (printedRestaurants.find(restaurant.restaurantName) == printedRestaurants.end()) {
+                        filteredRestaurants.push_back(restaurant);
+                    }
+                }
+
+                sort(filteredRestaurants.begin(), filteredRestaurants.end(), [](const Restaurant& a, const Restaurant& b) {
+                    return a.restaurantName < b.restaurantName;
+                });
+
+                for (const auto& restaurant : filteredRestaurants) {
+                    cout << restaurant.restaurantName << " (" << restaurant.district_name << ")" << endl;
+                    printedRestaurants.insert(restaurant.restaurantName);
+                }
+            };
+            
+
+            vector<Restaurant> userDistrictRestaurants;
+            for (const auto& restaurant : restaurants) {
+                if (restaurant.district_name == userDistrict) {
+                    userDistrictRestaurants.push_back(restaurant);
+                }
+            }
+            filterAndPrintRestaurants(userDistrictRestaurants);
+
+            auto printNearbyRestaurants = [&](const vector<string>& nearbyDistricts) {
+                for (const auto& neighbor : nearbyDistricts) {
+                    vector<Restaurant> neighborRestaurants;
+                    for (const auto& restaurant : restaurants) {
+                        if (restaurant.district_name == neighbor) {
+                            neighborRestaurants.push_back(restaurant);
+                        }
+                    }
+                    filterAndPrintRestaurants(neighborRestaurants);
+                }
+            };
+
+            vector<string> nearbyDistricts = getNearbyDistricts(userDistrict);
+            printNearbyRestaurants(nearbyDistricts);
+
+            for (const auto& neighbor : nearbyDistricts) {
+                vector<string> secondDegreeDistricts = getNearbyDistricts(neighbor);
+                printNearbyRestaurants(secondDegreeDistricts);
+            }
+
+            vector<Restaurant> remainingRestaurants;
+            for (const auto& restaurant : restaurants) {
+                if (restaurant.district_name != userDistrict &&
+                    find(nearbyDistricts.begin(), nearbyDistricts.end(), restaurant.district_name) == nearbyDistricts.end()) {
+                    bool inSecondDegree = false;
+                    for (const auto& neighbor : nearbyDistricts) {
+                        vector<string> secondDegreeDistricts = getNearbyDistricts(neighbor);
+                        if (find(secondDegreeDistricts.begin(), secondDegreeDistricts.end(), restaurant.district_name) != secondDegreeDistricts.end()) {
+                            inSecondDegree = true;
+                            break;
+                        }
+                    }
+                    if (!inSecondDegree) {
+                        remainingRestaurants.push_back(restaurant);
+                    }
+                }
+            }
+            filterAndPrintRestaurants(remainingRestaurants);
         }
 
-        if (districtFilter) {
-            auto it = find_if(districts.begin(), districts.end(), [&](const District& d) {
-                return d.name == districtName;
-            });
-            if (it != districts.end()) {
-                it->print();
-            } else {
-                cout << NOT_FOUND << endl;
-            }
-        } else {
-            sort(districts.begin(), districts.end(), [](const District& a, const District& b) {
-                return a.name < b.name;
-            });
-            for (const auto& district : districts) {
-                district.print();
-            }
-        }
+
+
+
+        // برای دستورات دیگر مانند "restaurant_detail" و "reserves" می‌توانید کد مشابهی اضافه کنید
+
     } catch (const string& err) {
         cout << err << endl;
     }
 }
+
+
 
 
 void Utaste::handle_delete() {}
@@ -208,11 +348,11 @@ void Utaste::handle_put(const string method) {
         istringstream iss(method);
         iss >> command >> secondOrder;
 
-        if (secondOrder != "my_district") {
+        if (secondOrder != MY_DISTRICT) {
             throw string(BAD_REQUEST);
         }
 
-        if (current_user == nullptr || current_user->get_state() != 2) {
+        if (current_user == nullptr || current_user->get_state() != LOGIN_STATE) {
             cout << PERMISSION_DENIED << endl;
             return;
         }
@@ -225,14 +365,14 @@ void Utaste::handle_put(const string method) {
         bool districtProvided = false;
         while (remainingStream >> word) {
             if (word == DISTRICT) {
-                remainingStream >> ws; // Ignore leading whitespace
+                remainingStream >> ws;
                 getline(remainingStream, word);
-                size_t start = word.find('"');
-                size_t end = word.rfind('"');
+                size_t start = word.find(Double_quotation);
+                size_t end = word.rfind(Double_quotation);
                 if (start == string::npos || end == string::npos || start == end) {
                     throw string(BAD_REQUEST);
                 }
-                district = word.substr(start + 1, end - start - 1);
+                district = word.substr(start + ONE, end - start - ONE);
                 if (district.empty()) {
                     throw string(BAD_REQUEST);
                 }
@@ -246,7 +386,7 @@ void Utaste::handle_put(const string method) {
         }
 
         auto it = find_if(districts.begin(), districts.end(), [&](const District& d) {
-            return d.name == district;
+            return d.district_name == district;
         });
 
         if (it != districts.end()) {
