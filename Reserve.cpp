@@ -24,4 +24,3 @@ map<int, int> Reserve::get_reservedTime() const {
 const vector<string>& Reserve::get_foodList() const {
      return foodList; 
 }
-

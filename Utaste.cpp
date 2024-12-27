@@ -29,6 +29,7 @@ const string RESTAURANT_DETAIL = "restaurant_detail";
 const string RESTAURANT_NAME = "restaurant_name";
 const string RESERVES = "reserves";
 const string RESERVE = "reserve";
+const string RESERVE_ID = "reserve_id";
 const string TABLE_ID = "table_id";
 const string FOOD_NAME = "food_name";
 const string START_TIME = "start_time";
@@ -41,6 +42,9 @@ const int TWO_CHARACTER = 2;
 const int ZERO = 0;
 const int ONE = 1;
 const char Double_quotation = '"';
+const char CAMA = ',';
+const string SPACE = " ";
+
 
 Utaste::Utaste(const vector<District>& districts, const vector<Restaurant>& restaurants) : districts(districts), restaurants(restaurants) {}
 
@@ -243,7 +247,7 @@ void Utaste::handle_post(const string method) {
             if (!foods.empty()) {
                 istringstream foodStream(foods);
                 string foodItem;
-                while (getline(foodStream, foodItem, ',')) {
+                while (getline(foodStream, foodItem, CAMA)) {
                     foodList.push_back(foodItem);
                 }
 
@@ -498,10 +502,10 @@ void Utaste::handle_get(const string method) {
             string restaurantName;
 
             while (iss >> word) {
-                if (word == "restaurant_name") {
+                if (word == RESTAURANT_NAME) {
                     iss >> ws;
-                    getline(iss, restaurantName, '"');
-                    getline(iss, restaurantName, '"');
+                    getline(iss, restaurantName, Double_quotation);
+                    getline(iss, restaurantName, Double_quotation);
                     if (restaurantName.empty()) {
                         throw string(BAD_REQUEST);
                     }
@@ -530,7 +534,7 @@ void Utaste::handle_get(const string method) {
         for (size_t i = 0; i < sortedMenu.size(); ++i) {
             cout << sortedMenu[i].first << "(" << sortedMenu[i].second << ")";
             if (i != sortedMenu.size() - 1) {
-                cout << ", ";
+                cout << " ,";
             }
         }
         cout << endl;
@@ -557,29 +561,28 @@ void Utaste::handle_get(const string method) {
 
         }
 
-        else if (secondOrder == "reserves") {
+        else if (secondOrder == RESERVES) {
             string word, restaurantName, reserveIdStr;
             int reserveId = 0;
             bool hasRestaurantName = false, hasReserveId = false;
 
             while (iss >> word) {
-                if (word == "restaurant_name") {
+                if (word == RESTAURANT_NAME) {
                     iss >> ws;
-                    getline(iss, restaurantName, '"');
-                    getline(iss, restaurantName, '"');
+                    getline(iss, restaurantName, Double_quotation);
+                    getline(iss, restaurantName, Double_quotation);
                     hasRestaurantName = true;
-                } else if (word == "reserve_id") {
+                } else if (word == RESERVE_ID) {
                     if (!hasRestaurantName) throw string(BAD_REQUEST);
                     iss >> ws;
-                    getline(iss, reserveIdStr, '"');
-                    getline(iss, reserveIdStr, '"');
+                    getline(iss, reserveIdStr, Double_quotation);
+                    getline(iss, reserveIdStr, Double_quotation);
                     reserveId = stoi(reserveIdStr);
                     hasReserveId = true;
                 }
             }
 
             if (hasRestaurantName) {
-                // پیدا کردن رستوران با نام وارد شده
                 auto restaurant_it = find_if(restaurants.begin(), restaurants.end(), [&](const Restaurant& r) {
                     return r.restaurantName == restaurantName;
                 });
@@ -604,27 +607,25 @@ void Utaste::handle_get(const string method) {
             if (hasReserveId && userReserves.empty()) throw string(PERMISSION_DENIED);
             if (userReserves.empty()) throw string("Empty");
 
-            // مرتب‌سازی رزروها بر اساس زمان شروع
             sort(userReserves.begin(), userReserves.end(), [](const Reserve& a, const Reserve& b) {
                 return a.get_reservedTime().begin()->first < b.get_reservedTime().begin()->first;
             });
 
-            // نمایش رزروها
             for (const auto& res : userReserves) {
-                cout << res.get_reserveId() << ": " << res.restaurant.restaurantName << " "
-                     << res.get_table() << " "
+                cout << res.get_reserveId() << ": " << res.restaurant.restaurantName << SPACE
+                     << res.get_table() << SPACE
                      << res.get_reservedTime().begin()->first << "-" << res.get_reservedTime().rbegin()->second;
 
                 const auto& foodList = res.get_foodList();
                 if (!foodList.empty()) {
-                    cout << " ";
+                    cout << SPACE;
                     map<string, int> foodCount;
                     for (const auto& food : foodList) {
                         foodCount[food]++;
                     }
                     for (auto it = foodCount.begin(); it != foodCount.end(); ++it) {
                         cout << it->first << " (" << it->second << ")";
-                        if (next(it) != foodCount.end()) cout << ", ";
+                        if (next(it) != foodCount.end()) cout << SPACE;
                     }
                 }
                 cout << endl;
@@ -649,24 +650,24 @@ void Utaste::handle_delete(const string method) {
             throw string(PERMISSION_DENIED);
         }
 
-        if (action != "reserve") {
+        if (action != RESERVE) {
             throw string(BAD_REQUEST);
         }
 
         string word, restaurantName, reserveIdStr;
-        int reserveId = 0;
+        int reserveId = ZERO;
         bool hasRestaurantName = false, hasReserveId = false;
 
         while (iss >> word) {
-            if (word == "restaurant_name") {
+            if (word == RESTAURANT_NAME) {
                 iss >> ws;
-                getline(iss, restaurantName, '"');
-                getline(iss, restaurantName, '"');
+                getline(iss, restaurantName, Double_quotation);
+                getline(iss, restaurantName, Double_quotation);
                 hasRestaurantName = true;
-            } else if (word == "reserve_id") {
+            } else if (word == RESERVE_ID) {
                 iss >> ws;
-                getline(iss, reserveIdStr, '"');
-                getline(iss, reserveIdStr, '"');
+                getline(iss, reserveIdStr, Double_quotation);
+                getline(iss, reserveIdStr, Double_quotation);
                 reserveId = stoi(reserveIdStr);
                 hasReserveId = true;
             }
@@ -676,7 +677,6 @@ void Utaste::handle_delete(const string method) {
             throw string(BAD_REQUEST);
         }
 
-        // پیدا کردن رستوران با نام وارد شده
         auto restaurant_it = find_if(restaurants.begin(), restaurants.end(), [&](const Restaurant& r) {
             return r.restaurantName == restaurantName;
         });
@@ -685,7 +685,6 @@ void Utaste::handle_delete(const string method) {
             throw string(NOT_FOUND);
         }
 
-        // پیدا کردن رزرو با شناسه و نام رستوران
         auto reserve_it = find_if(reservations.begin(), reservations.end(), [&](const Reserve& res) {
             return res.restaurant.restaurantName == restaurantName && res.get_reserveId() == reserveId;
         });
@@ -694,12 +693,10 @@ void Utaste::handle_delete(const string method) {
             throw string(NOT_FOUND);
         }
 
-        // بررسی اینکه آیا رزرو متعلق به کاربر فعلی است یا خیر
         if (reserve_it->user.get_username() != current_user->get_username()) {
             throw string(PERMISSION_DENIED);
         }
         add_deletedReservation(*reserve_it);
-        // حذف رزرو
         reservations.erase(reserve_it);
         cout << OK << endl;
 

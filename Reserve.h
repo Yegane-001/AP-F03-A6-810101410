@@ -23,5 +23,4 @@ class Reserve {
         map<int,int> get_reservedTime() const;
         const vector<string>& get_foodList() const;
 };
-
 #endif

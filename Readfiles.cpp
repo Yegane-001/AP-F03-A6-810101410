@@ -10,7 +10,7 @@ vector<District> readDistricts(const string& filePath) {
         return districts;
     }
 
-    getline(file, line); // خواندن هدر
+    getline(file, line);
     while (getline(file, line)) {
         stringstream ss(line);
         string name, neighbor;
@@ -36,7 +36,7 @@ vector<Restaurant> readRestaurants(const string& filePath) {
         return restaurants;
     }
 
-    getline(file, line); // خواندن هدر
+    getline(file, line);
     while (getline(file, line)) {
         stringstream ss(line);
         string rName, districtName, foodsStr;
