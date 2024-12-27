@@ -26,8 +26,14 @@ const string DISTRICT = "district";
 const string SET_LOCATION = "setlocation"; 
 const string RESTAURANTS = "restaurants";
 const string RESTAURANT_DETAIL = "restaurant_detail";
+const string RESTAURANT_NAME = "restaurant_name";
 const string RESERVES = "reserves";
+const string RESERVE = "reserve";
+const string TABLE_ID = "table_id";
 const string FOOD_NAME = "food_name";
+const string START_TIME = "start_time";
+const string END_TIME = "end_time";
+const string FOODS = "foods";
 const string MY_DISTRICT = "my_district";
 const int LOGIN_STATE = 2;
 const int LOGOUT_STATE = 3;
@@ -86,7 +92,7 @@ void Utaste::handle_post(const string method) {
         istringstream iss(method);
         iss >> command >> action;
 
-        if (action != SIGNUP && action != LOGIN && action != LOGOUT && action != "reserve") {
+        if (action != SIGNUP && action != LOGIN && action != LOGOUT && action != RESERVE) {
             throw BAD_REQUEST;
         }
 
@@ -160,8 +166,11 @@ void Utaste::handle_post(const string method) {
             }
         } 
         
-        else if (action == "reserve") {
-    // پارس کردن آرگومان‌ها
+        else if (action == RESERVE) {
+            if (current_user == nullptr || current_user->get_state() != LOGIN_STATE) {
+                cout << PERMISSION_DENIED << endl;
+                return;
+            }
             string restaurantName, tableId, startTime, endTime, foods;
 
             bool hasRestaurantName = false;
@@ -171,31 +180,31 @@ void Utaste::handle_post(const string method) {
             bool hasFoods = false;
 
             while (iss >> word) {
-                if (word == "restaurant_name") {
+                if (word == RESTAURANT_NAME) {
                     hasRestaurantName = true;
-                    iss >> ws; // Ignore leading whitespace
-                    getline(iss, restaurantName, '"');
-                    getline(iss, restaurantName, '"');
-                } else if (word == "table_id") {
+                    iss >> ws;
+                    getline(iss, restaurantName, Double_quotation);
+                    getline(iss, restaurantName, Double_quotation);
+                } else if (word == TABLE_ID) {
                     hasTableId = true;
-                    iss >> ws; // Ignore leading whitespace
-                    getline(iss, tableId, '"');
-                    getline(iss, tableId, '"');
-                } else if (word == "start_time") {
+                    iss >> ws;
+                    getline(iss, tableId, Double_quotation);
+                    getline(iss, tableId, Double_quotation);
+                } else if (word == START_TIME) {
                     hasStartTime = true;
-                    iss >> ws; // Ignore leading whitespace
-                    getline(iss, startTime, '"');
-                    getline(iss, startTime, '"');
-                } else if (word == "end_time") {
+                    iss >> ws;
+                    getline(iss, startTime, Double_quotation);
+                    getline(iss, startTime, Double_quotation);
+                } else if (word == END_TIME) {
                     hasEndTime = true;
-                    iss >> ws; // Ignore leading whitespace
-                    getline(iss, endTime, '"');
-                    getline(iss, endTime, '"');
-                } else if (word == "foods") {
+                    iss >> ws;
+                    getline(iss, endTime, Double_quotation);
+                    getline(iss, endTime, Double_quotation);
+                } else if (word == FOODS) {
                     bool hasFoods = true;
-                    iss >> ws; // Ignore leading whitespace
-                    getline(iss, foods, '"');
-                    getline(iss, foods, '"');
+                    iss >> ws; 
+                    getline(iss, foods, Double_quotation);
+                    getline(iss, foods, Double_quotation);
                 }
             }
 
@@ -211,17 +220,14 @@ void Utaste::handle_post(const string method) {
                 return r.restaurantName == restaurantName;
             });
 
-            if (restaurant_it == restaurants.end()) throw string("Not Found");
+            if (restaurant_it == restaurants.end()) throw string(NOT_FOUND);
             Restaurant& restaurant = *restaurant_it;
-            // بررسی محدوده ساعت کاری رستوران
             if (start_time < 1 || end_time > 24 || start_time < restaurant.openingTime || end_time > restaurant.closingTime) {
-                throw string("Permission Denied");
+                throw string(PERMISSION_DENIED);
             }
-            // بررسی موجود بودن میز
             if (table_id < 1 || table_id > restaurant.numTables) {
-                throw string("Not Found");
+                throw string(NOT_FOUND);
             }
-            //بررسی موجود یودن غذاها
             vector<string> foodList;
             if (!foods.empty()) {
                 istringstream foodStream(foods);
@@ -235,43 +241,38 @@ void Utaste::handle_post(const string method) {
                         return f.first == food;
                     });
                     if (food_it == restaurant.foods.end()) {
-                        throw string("Not Found");
+                        throw string(NOT_FOUND);
                     }
                 }
             }
 
-             // بررسی تداخل رزروها
             for (const auto& res : reservations) {
-                // بررسی تداخل در همان رستوران
                 if (res.restaurant.restaurantName == restaurantName && res.get_table() == table_id) {
                     for (const auto& time : res.get_reservedTime()) {
                         if ((start_time >= time.first && start_time < time.second) ||
                             (end_time > time.first && end_time <= time.second)) {
-                            throw string("Permission Denied");
+                            throw string(PERMISSION_DENIED);
                         }
                     }
                 }
 
-                // بررسی تداخل در رستوران‌های دیگر
                 if (res.user.get_username() == current_user->get_username()) {
                     for (const auto& time : res.get_reservedTime()) {
                         if ((start_time >= time.first && start_time < time.second) ||
                             (end_time > time.first && end_time <= time.second)) {
-                            throw string("Permission Denied");
+                            throw string(PERMISSION_DENIED);
                         }
                     }
                 }
             }
-            // ایجاد رزرو
-            int reserve_id = 1;  // شناسه رزرو در سطح رستوران
+            int reserve_id = 1;
             for (const auto& res : reservations) {
                 if (res.restaurant.restaurantName == restaurantName) {
                     reserve_id++;
                 }
             }
             
-            Reserve new_reserve(restaurant, *current_user, reserve_id, table_id, start_time, end_time);
-            // اضافه کردن غذاها به رزرو و محاسبه قیمت
+            Reserve new_reserve(restaurant, *current_user, reserve_id, table_id, start_time, end_time, foodList);
             int total_price = 0;
             map<int, int> reserved_time;
             for (int hour = start_time; hour <= end_time; ++hour) {
@@ -290,14 +291,9 @@ void Utaste::handle_post(const string method) {
 
             addReservation(new_reserve);
 
-            // چاپ اطلاعات رزرو
             cout << "Reserve ID: " << reserve_id << endl;
             cout << "Table " << table_id << " for " << start_time << " to " << end_time << " in " << restaurantName << endl;
             cout << "Price: " << total_price << endl;
-        
-
-
-    // بقیه کد همان است
         }
 
     } 
