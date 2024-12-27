@@ -547,7 +547,81 @@ void Utaste::handle_get(const string method) {
 
         }
 
-    } catch (const string& err) {
+        else if (secondOrder == "reserves") {
+            string word, restaurantName, reserveIdStr;
+            int reserveId = 0;
+            bool hasRestaurantName = false, hasReserveId = false;
+
+            while (iss >> word) {
+                if (word == "restaurant_name") {
+                    iss >> ws;
+                    getline(iss, restaurantName, '"');
+                    getline(iss, restaurantName, '"');
+                    hasRestaurantName = true;
+                } else if (word == "reserve_id") {
+                    if (!hasRestaurantName) throw string(BAD_REQUEST);
+                    iss >> ws;
+                    getline(iss, reserveIdStr, '"');
+                    getline(iss, reserveIdStr, '"');
+                    reserveId = stoi(reserveIdStr);
+                    hasReserveId = true;
+                }
+            }
+
+            if (hasRestaurantName) {
+                // پیدا کردن رستوران با نام وارد شده
+                auto restaurant_it = find_if(restaurants.begin(), restaurants.end(), [&](const Restaurant& r) {
+                    return r.restaurantName == restaurantName;
+                });
+                if (restaurant_it == restaurants.end()) throw string(NOT_FOUND);
+            }
+
+            vector<Reserve> userReserves;
+            bool reserveFound = false;
+
+            for (const auto& res : reservations) {
+                if (res.user.get_username() == current_user->get_username()) {
+                    if (hasRestaurantName && res.restaurant.restaurantName != restaurantName) continue;
+                    if (hasReserveId && res.get_reserveId() != reserveId) continue;
+                    userReserves.push_back(res);
+                }
+                if (hasReserveId && res.restaurant.restaurantName == restaurantName && res.get_reserveId() == reserveId) {
+                    reserveFound = true;
+                }
+            }
+
+            if (hasReserveId && !reserveFound) throw string(NOT_FOUND);
+            if (hasReserveId && userReserves.empty()) throw string(PERMISSION_DENIED);
+            if (userReserves.empty()) throw string("Empty");
+
+            // مرتب‌سازی رزروها بر اساس زمان شروع
+            sort(userReserves.begin(), userReserves.end(), [](const Reserve& a, const Reserve& b) {
+                return a.get_reservedTime().begin()->first < b.get_reservedTime().begin()->first;
+            });
+
+            // نمایش رزروها
+            for (const auto& res : userReserves) {
+                cout << res.get_reserveId() << ": " << res.restaurant.restaurantName << " "
+                     << res.get_table() << " "
+                     << res.get_reservedTime().begin()->first << "-" << res.get_reservedTime().rbegin()->second;
+
+                const auto& foodList = res.get_foodList();
+                if (!foodList.empty()) {
+                    cout << " ";
+                    map<string, int> foodCount;
+                    for (const auto& food : foodList) {
+                        foodCount[food]++;
+                    }
+                    for (auto it = foodCount.begin(); it != foodCount.end(); ++it) {
+                        cout << it->first << " (" << it->second << ")";
+                        if (next(it) != foodCount.end()) cout << ", ";
+                    }
+                }
+                cout << endl;
+            }
+        }
+    } 
+    catch (const string& err) {
         cout << err << endl;
     }
 }
