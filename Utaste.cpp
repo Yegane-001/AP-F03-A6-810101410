@@ -489,7 +489,7 @@ void Utaste::handle_get(const string method) {
 
             while (iss >> word) {
                 if (word == "restaurant_name") {
-                    iss >> ws; // Ignore leading whitespace
+                    iss >> ws;
                     getline(iss, restaurantName, '"');
                     getline(iss, restaurantName, '"');
                     if (restaurantName.empty()) {
@@ -499,12 +499,10 @@ void Utaste::handle_get(const string method) {
                 }
             }
 
-
         if (restaurantName.empty()) {
             throw string(BAD_REQUEST);
         }
 
-        // پیدا کردن رستوران با نام وارد شده
         auto restaurant_it = find_if(restaurants.begin(), restaurants.end(), [&](const Restaurant& r) {
             return r.restaurantName == restaurantName;
         });
@@ -513,12 +511,9 @@ void Utaste::handle_get(const string method) {
 
         const Restaurant& restaurant = *restaurant_it;
 
-        // چاپ اطلاعات رستوران
         cout << "Name: " << restaurant.restaurantName << endl;
         cout << "District: " << restaurant.district_name << endl;
         cout << "Time: " << restaurant.openingTime << "-" << restaurant.closingTime << endl;
-
-        // چاپ منوی رستوران به ترتیب حروف الفبا
         cout << "Menu: ";
         vector<pair<string, int>> sortedMenu(restaurant.foods.begin(), restaurant.foods.end());
         sort(sortedMenu.begin(), sortedMenu.end());
@@ -530,7 +525,6 @@ void Utaste::handle_get(const string method) {
         }
         cout << endl;
 
-        // چاپ اطلاعات میزها و رزروها
         for (int i = 1; i <= restaurant.numTables; ++i) {
             cout << i << ": ";
             vector<pair<int, int>> tableReservations;
@@ -552,9 +546,6 @@ void Utaste::handle_get(const string method) {
         }
 
         }
-
-
-        // برای دستورات دیگر مانند "restaurant_detail" و "reserves" می‌توانید کد مشابهی اضافه کنید
 
     } catch (const string& err) {
         cout << err << endl;
