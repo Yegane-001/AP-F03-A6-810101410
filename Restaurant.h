@@ -4,6 +4,7 @@
 #include "District.h"
 #include <vector>
 #include <string>
+#include <map>
 using namespace std;
 
 class Restaurant : public District {
@@ -11,7 +12,6 @@ public:
     string restaurantName;
     vector<std::pair<std::string, int>> foods; 
     int openingTime, closingTime, numTables;
-
     Restaurant();
     Restaurant(const std::string& districtName, const std::string& rName);
 

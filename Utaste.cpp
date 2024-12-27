@@ -131,9 +131,16 @@ void Utaste::handle_post(const string method) {
         if (action == SIGNUP) {
             if (find_user(username) != nullptr) {
                 cout << BAD_REQUEST << endl;
-            } else {
+            } 
+            else if (current_user!=nullptr)
+            {
+                cout << PERMISSION_DENIED <<endl;
+            }
+            else {
                 User new_user(username, password);
                 users.push_back(new_user);
+                current_user = find_user(username);
+                current_user->set_state(LOGIN_STATE);
                 cout << OK << endl;
             }
 
@@ -472,7 +479,79 @@ void Utaste::handle_get(const string method) {
             filterAndPrintRestaurants(remainingRestaurants);
         }
 
+        else if(secondOrder == RESTAURANT_DETAIL) {
+            if (current_user == nullptr) {
+                cout << PERMISSION_DENIED << endl;
+                return;
+            }
+            string word;
+            string restaurantName;
 
+            while (iss >> word) {
+                if (word == "restaurant_name") {
+                    iss >> ws; // Ignore leading whitespace
+                    getline(iss, restaurantName, '"');
+                    getline(iss, restaurantName, '"');
+                    if (restaurantName.empty()) {
+                        throw string(BAD_REQUEST);
+                    }
+                    break;
+                }
+            }
+
+
+        if (restaurantName.empty()) {
+            throw string(BAD_REQUEST);
+        }
+
+        // پیدا کردن رستوران با نام وارد شده
+        auto restaurant_it = find_if(restaurants.begin(), restaurants.end(), [&](const Restaurant& r) {
+            return r.restaurantName == restaurantName;
+        });
+
+        if (restaurant_it == restaurants.end()) throw string(NOT_FOUND);
+
+        const Restaurant& restaurant = *restaurant_it;
+
+        // چاپ اطلاعات رستوران
+        cout << "Name: " << restaurant.restaurantName << endl;
+        cout << "District: " << restaurant.district_name << endl;
+        cout << "Time: " << restaurant.openingTime << "-" << restaurant.closingTime << endl;
+
+        // چاپ منوی رستوران به ترتیب حروف الفبا
+        cout << "Menu: ";
+        vector<pair<string, int>> sortedMenu(restaurant.foods.begin(), restaurant.foods.end());
+        sort(sortedMenu.begin(), sortedMenu.end());
+        for (size_t i = 0; i < sortedMenu.size(); ++i) {
+            cout << sortedMenu[i].first << "(" << sortedMenu[i].second << ")";
+            if (i != sortedMenu.size() - 1) {
+                cout << ", ";
+            }
+        }
+        cout << endl;
+
+        // چاپ اطلاعات میزها و رزروها
+        for (int i = 1; i <= restaurant.numTables; ++i) {
+            cout << i << ": ";
+            vector<pair<int, int>> tableReservations;
+            for (const auto& res : reservations) {
+                if (res.restaurant.restaurantName == restaurant.restaurantName && res.get_table() == i) {
+                    for (const auto& time : res.get_reservedTime()) {
+                        tableReservations.push_back({time.first, time.second});
+                    }
+                }
+            }
+            sort(tableReservations.begin(), tableReservations.end());
+            for (size_t j = 0; j < tableReservations.size(); ++j) {
+                if (j > 0) {
+                    cout << ", ";
+                }
+                cout << "(" << tableReservations[j].first << "-" << tableReservations[j].second << ")";
+            }
+            cout << endl;
+        }
+
+        }
 
 
         // برای دستورات دیگر مانند "restaurant_detail" و "reserves" می‌توانید کد مشابهی اضافه کنید

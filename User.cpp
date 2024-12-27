@@ -5,15 +5,15 @@ using namespace std;
 
 User::User(const string& u, const string& p) : username(u), password(p), state(1) {}
 
-string User::get_username() {
+string User::get_username() const{
     return username;
 }
 
-string User::get_password() {
+string User::get_password() const{
     return password;
 }
 
-int User::get_state() {
+int User::get_state() const {
     return state;
 }
 
