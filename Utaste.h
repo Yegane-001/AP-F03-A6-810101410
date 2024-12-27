@@ -15,17 +15,20 @@ private:
     vector<District> districts;
     vector<Restaurant> restaurants;
     vector<Reserve> reservations;
+    vector<Reserve> deleted_reserves;
 
 public:
     Utaste(const vector<District>& districts, const vector<Restaurant>& restaurants);
     void handle_input();
     void handle_get(const string command);
     void handle_put(const string command);
-    void handle_delete();
+    void handle_delete(const string command);
     void handle_post(const string command);
     User* find_user(const string& username);
     vector<string> getNearbyDistricts(const string& districtName);
     void addReservation(const Reserve& reservation);
+    vector<Reserve> get_deletedReserves();
+    void  add_deletedReservation(const Reserve& deleted);
 };
 
 #endif
