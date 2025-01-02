@@ -1,0 +1,5 @@
+restaurant_name,total_price_discount,first_order_discount,food_discount
+sib,percent;800;7,none,amount;berger:20/percent;pitza:50
+maman joon,amount;1000;100,percent;10,percent;pitza:30/amount;sandwich:15
+shandiz,percent;1500;10,amount;500,none
+ghazal,none,percent;15,percent;kebab:25
