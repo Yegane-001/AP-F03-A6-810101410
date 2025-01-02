@@ -39,6 +39,7 @@ const string FOODS = "foods";
 const string MY_DISTRICT = "my_district";
 const string INCREASE_BUDGET = "increase_budget";
 const string AMOUNT = "amount";
+const string SHOW_BUDGET = "show_budget";
 const int LOGIN_STATE = 2;
 const int LOGOUT_STATE = 3;
 const int TWO_CHARACTER = 2;
@@ -46,7 +47,9 @@ const int ZERO = 0;
 const int ONE = 1;
 const char Double_quotation = '"';
 const char CAMA = ',';
-const string SPACE = " ";
+const char SPACE = ' ';
+const string SPACE2 = " ";
+
 
 
 Utaste::Utaste(const vector<District>& districts, const vector<Restaurant>& restaurants) : districts(districts), restaurants(restaurants) {}
@@ -331,8 +334,7 @@ void Utaste::handle_post(const string method) {
                 if (word == AMOUNT) {
                     hasAmount = true;
                     iss >> ws;
-                    getline(iss, amount_s, Double_quotation);
-                    getline(iss, amount_s, Double_quotation);
+                    getline(iss, amount_s, SPACE);
                 }
             }
             if (!hasAmount) {
@@ -341,18 +343,21 @@ void Utaste::handle_post(const string method) {
 
             for (char c : amount_s) {
                 if (!isdigit(c)) {
-                    throw string(BAD_REQUEST);
+                    cout << BAD_REQUEST << endl;
+                    return;
                 }
             }
 
             int amount = stoi(amount_s);
             if (amount <= 0) {
-                throw string(BAD_REQUEST);
+                cout << BAD_REQUEST << endl;
+                return;
             }
+
             current_user->increase_budget_amount(amount);
             cout << OK << endl;
-
         }
+
     } 
     
     catch (const string& err) {
@@ -374,7 +379,7 @@ void Utaste::handle_get(const string method) {
             return;
         }
 
-        if (secondOrder != DISTRICTS && secondOrder != RESTAURANTS && secondOrder != RESTAURANT_DETAIL && secondOrder != RESERVES) {
+        if (secondOrder != DISTRICTS && secondOrder != RESTAURANTS && secondOrder != RESTAURANT_DETAIL && secondOrder != RESERVES && secondOrder != SHOW_BUDGET) {
             throw string(BAD_REQUEST);
         }
 
@@ -648,24 +653,28 @@ void Utaste::handle_get(const string method) {
             });
 
             for (const auto& res : userReserves) {
-                cout << res.get_reserveId() << ": " << res.restaurant.restaurantName << SPACE
-                     << res.get_table() << SPACE
+                cout << res.get_reserveId() << ": " << res.restaurant.restaurantName << SPACE2
+                     << res.get_table() << SPACE2
                      << res.get_reservedTime().begin()->first << "-" << res.get_reservedTime().rbegin()->second;
 
                 const auto& foodList = res.get_foodList();
                 if (!foodList.empty()) {
-                    cout << SPACE;
+                    cout << SPACE2;
                     map<string, int> foodCount;
                     for (const auto& food : foodList) {
                         foodCount[food]++;
                     }
                     for (auto it = foodCount.begin(); it != foodCount.end(); ++it) {
                         cout << it->first << " (" << it->second << ")";
-                        if (next(it) != foodCount.end()) cout << SPACE;
+                        if (next(it) != foodCount.end()) cout << SPACE2;
                     }
                 }
                 cout << endl;
             }
+        }
+    
+        else if (secondOrder == SHOW_BUDGET) {
+            cout << current_user->get_budget()<<endl;
         }
     } 
     catch (const string& err) {
