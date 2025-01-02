@@ -28,3 +28,11 @@ string User::get_location() {
 void User::set_location(const string& loc) { 
     location = loc;
 }
+
+int User::get_budget() {
+    return budget;
+}
+
+void User::increase_budget_amount(int amount) {
+    budget += amount;
+}
