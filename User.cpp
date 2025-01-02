@@ -3,7 +3,9 @@
 #include <sstream>
 using namespace std;
 
-User::User(const string& u, const string& p) : username(u), password(p), state(1) {}
+User::User(const string& u, const string& p) : username(u), password(p), state(1) {
+    budget = 0;
+}
 
 string User::get_username() const{
     return username;
