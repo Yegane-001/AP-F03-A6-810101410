@@ -37,6 +37,8 @@ const string START_TIME = "start_time";
 const string END_TIME = "end_time";
 const string FOODS = "foods";
 const string MY_DISTRICT = "my_district";
+const string INCREASE_BUDGET = "increase_budget";
+const string AMOUNT = "amount";
 const int LOGIN_STATE = 2;
 const int LOGOUT_STATE = 3;
 const int TWO_CHARACTER = 2;
@@ -101,7 +103,7 @@ void Utaste::handle_post(const string method) {
         istringstream iss(method);
         iss >> command >> action;
 
-        if (action != SIGNUP && action != LOGIN && action != LOGOUT && action != RESERVE) {
+        if (action != SIGNUP && action != LOGIN && action != LOGOUT && action != RESERVE && action != INCREASE_BUDGET) {
             throw BAD_REQUEST;
         }
 
@@ -318,6 +320,39 @@ void Utaste::handle_post(const string method) {
             cout << "Price: " << total_price << endl;
         }
 
+        else if (action == INCREASE_BUDGET) {
+            if (current_user == nullptr || current_user->get_state() != LOGIN_STATE) {
+                cout << PERMISSION_DENIED << endl;
+                return;
+            }
+            string amount_s;
+            bool hasAmount = false;
+            while (iss >> word) {
+                if (word == AMOUNT) {
+                    hasAmount = true;
+                    iss >> ws;
+                    getline(iss, amount_s, Double_quotation);
+                    getline(iss, amount_s, Double_quotation);
+                }
+            }
+            if (!hasAmount) {
+                throw string(BAD_REQUEST);
+            }
+
+            for (char c : amount_s) {
+                if (!isdigit(c)) {
+                    throw string(BAD_REQUEST);
+                }
+            }
+
+            int amount = stoi(amount_s);
+            if (amount <= 0) {
+                throw string(BAD_REQUEST);
+            }
+            current_user->increase_budget_amount(amount);
+            cout << OK << endl;
+
+        }
     } 
     
     catch (const string& err) {
