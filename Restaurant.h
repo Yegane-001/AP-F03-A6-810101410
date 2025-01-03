@@ -18,7 +18,7 @@ public:
 
     void print() const override; 
 
-    ~Restaurant() = default;
+    ~Restaurant();
     vector<Discount*> discounts; 
 };
 
