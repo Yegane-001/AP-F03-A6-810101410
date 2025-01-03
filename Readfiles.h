@@ -10,10 +10,12 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <algorithm>
+#include <cctype> 
 using namespace std;
 
 vector<Restaurant> readRestaurants(const string& filePath);
 vector<District> readDistricts(const string& filePath);
-vector<pair<string, vector<Discount*>>> readDiscounts(string filename);
+vector<Restaurant> readDiscounts(vector<Restaurant>& restaurants, const string& discountsFile);
 
 #endif
