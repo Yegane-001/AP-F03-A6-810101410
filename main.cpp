@@ -21,23 +21,19 @@ int main(int argc, char* argv[]) {
     string discountsFile = argv[3];
     vector<District> districts = readDistricts(districtsFile);
     vector<Restaurant> restaurants = readRestaurants(restaurantsFile);
-    vector<pair<string, vector<Discount*>>> discounts = readDiscounts(discountsFile);
-    for (auto& restaurant : restaurants) {
-        for (const auto& discount_pair : discounts) {
-            if (restaurant.restaurantName == discount_pair.first) {
-                restaurant.discounts = discount_pair.second;
-            }
-        }
-    }
-    for (const auto& restaurant : restaurants) {
+    restaurants = readDiscounts(restaurants, discountsFile);
+
+    /*for (const auto& restaurant : restaurants) {
         restaurant.print();
         cout << "Discounts:\n";
         for (const auto& discount : restaurant.discounts) {
             cout << "Type: " << discount->get_type() << ", Value: " << discount->get_value() << "\n";
         }
-    }
+    }*/
+  
     Utaste utaste(districts,restaurants);
     utaste.handle_input();
 
     return 0;
 }
+
