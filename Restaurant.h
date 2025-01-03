@@ -10,10 +10,10 @@ using namespace std;
 class Restaurant : public District {
 public:
     string restaurantName;
-    vector<std::pair<std::string, int>> foods; 
+    vector<pair<string, int>> foods; 
     int openingTime, closingTime, numTables;
     Restaurant();
-    Restaurant(const std::string& districtName, const std::string& rName);
+    Restaurant(const string& districtName, const string& rName);
 
     void print() const override; 
 
