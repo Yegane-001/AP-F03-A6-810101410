@@ -16,3 +16,9 @@ void Restaurant::print() const {
     cout << "\nOpening: " << openingTime << ", Closing: " << closingTime 
          << ", Tables: " << numTables << endl;
 }
+
+Restaurant::~Restaurant() {
+    for (auto d : discounts) {
+        delete d;
+    }
+}

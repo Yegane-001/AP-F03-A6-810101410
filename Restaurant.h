@@ -2,6 +2,7 @@
 #define RESTAURANT_H
 
 #include "District.h"
+#include "Discount.h"
 #include <vector>
 #include <string>
 #include <map>
@@ -18,6 +19,7 @@ public:
     void print() const override; 
 
     ~Restaurant() = default;
+    vector<Discount*> discounts; 
 };
 
 #endif
