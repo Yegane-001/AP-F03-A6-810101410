@@ -3,6 +3,7 @@
 #include "User.h"
 #include "Restaurant.h"
 #include "District.h"
+#include "Discount.h"
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -554,52 +555,51 @@ void Utaste::handle_get(const string method) {
                 }
             }
 
-        if (restaurantName.empty()) {
-            throw string(BAD_REQUEST);
-        }
-
-        auto restaurant_it = find_if(restaurants.begin(), restaurants.end(), [&](const Restaurant& r) {
-            return r.restaurantName == restaurantName;
-        });
-
-        if (restaurant_it == restaurants.end()) throw string(NOT_FOUND);
-
-        const Restaurant& restaurant = *restaurant_it;
-
-        cout << "Name: " << restaurant.restaurantName << endl;
-        cout << "District: " << restaurant.district_name << endl;
-        cout << "Time: " << restaurant.openingTime << "-" << restaurant.closingTime << endl;
-        cout << "Menu: ";
-        vector<pair<string, int>> sortedMenu(restaurant.foods.begin(), restaurant.foods.end());
-        sort(sortedMenu.begin(), sortedMenu.end());
-        for (size_t i = 0; i < sortedMenu.size(); ++i) {
-            cout << sortedMenu[i].first << "(" << sortedMenu[i].second << ")";
-            if (i != sortedMenu.size() - 1) {
-                cout << " ,";
+            if (restaurantName.empty()) {
+                throw string(BAD_REQUEST);
             }
-        }
-        cout << endl;
 
-        for (int i = 1; i <= restaurant.numTables; ++i) {
-            cout << i << ": ";
-            vector<pair<int, int>> tableReservations;
-            for (const auto& res : reservations) {
-                if (res.restaurant.restaurantName == restaurant.restaurantName && res.get_table() == i) {
-                    for (const auto& time : res.get_reservedTime()) {
-                        tableReservations.push_back({time.first, time.second});
-                    }
-                }
-            }
-            sort(tableReservations.begin(), tableReservations.end());
-            for (size_t j = 0; j < tableReservations.size(); ++j) {
-                if (j > 0) {
+            auto restaurant_it = find_if(restaurants.begin(), restaurants.end(), [&](const Restaurant& r) {
+                return r.restaurantName == restaurantName;
+            });
+
+            if (restaurant_it == restaurants.end()) throw string(NOT_FOUND);
+
+            const Restaurant& restaurant = *restaurant_it;
+
+            cout << "Name: " << restaurant.restaurantName << endl;
+            cout << "District: " << restaurant.district_name << endl;
+            cout << "Time: " << restaurant.openingTime << "-" << restaurant.closingTime << endl;
+            cout << "Menu: ";
+            vector<pair<string, int>> sortedMenu(restaurant.foods.begin(), restaurant.foods.end());
+            sort(sortedMenu.begin(), sortedMenu.end());
+            for (size_t i = 0; i < sortedMenu.size(); ++i) {
+                cout << sortedMenu[i].first << "(" << sortedMenu[i].second << ")";
+                if (i != sortedMenu.size() - 1) {
                     cout << ", ";
                 }
-                cout << "(" << tableReservations[j].first << "-" << tableReservations[j].second << ")";
             }
             cout << endl;
-        }
 
+            for (int i = 1; i <= restaurant.numTables; ++i) {
+                cout << i << ": ";
+                vector<pair<int, int>> tableReservations;
+                for (const auto& res : reservations) {
+                    if (res.restaurant.restaurantName == restaurant.restaurantName && res.get_table() == i) {
+                        for (const auto& time : res.get_reservedTime()) {
+                            tableReservations.push_back({time.first, time.second});
+                        }
+                    }
+                }
+                sort(tableReservations.begin(), tableReservations.end());
+                for (size_t j = 0; j < tableReservations.size(); ++j) {
+                    if (j > 0) {
+                        cout << ", ";
+                    }
+                    cout << "(" << tableReservations[j].first << "-" << tableReservations[j].second << ")";
+                }
+                cout << endl;
+            }
         }
 
         else if (secondOrder == RESERVES) {
