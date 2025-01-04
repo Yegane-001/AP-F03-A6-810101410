@@ -100,7 +100,7 @@ vector<Restaurant> readDiscounts(vector<Restaurant>& restaurants, const string& 
             tp_stream.ignore(1, ';');  
             tp_stream >> value; 
 
-            Discount* totalPriceDiscount = new Total_Price_Discount(type, value, minimum);
+            Total_Price_Discount* totalPriceDiscount = new Total_Price_Discount(type, value, minimum);
             it->discounts.push_back(totalPriceDiscount);
         }
 
@@ -111,7 +111,7 @@ vector<Restaurant> readDiscounts(vector<Restaurant>& restaurants, const string& 
             getline(fo_stream, type, ';');
             fo_stream >> value;            
 
-            Discount* firstOrderDiscount = new First_Order_Discount(type, value);
+            First_Order_Discount* firstOrderDiscount = new First_Order_Discount(type, value);
             it->discounts.push_back(firstOrderDiscount);
         }
 
@@ -127,7 +127,7 @@ vector<Restaurant> readDiscounts(vector<Restaurant>& restaurants, const string& 
                 getline(food_stream, food_name, ':');
                 food_stream >> value;               
 
-                Discount* foodDiscount = new Food_Discount(type_food, value, food_name);
+                Food_Discount* foodDiscount = new Food_Discount(type_food, value, food_name);
                 it->discounts.push_back(foodDiscount);
             }
         }
